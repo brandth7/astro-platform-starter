@@ -1,0 +1,103 @@
+---
+import '../styles/globals.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/800.css';
+import interFont400 from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
+import interFont800 from '@fontsource/inter/files/inter-latin-800-normal.woff2?url';
+
+interface Props {
+    title: string;
+    activePage: string;
+}
+
+const { title, activePage } = Astro.props;
+
+const sidebarItems = [
+    { label: 'IBC Calculator', href: '/infinite-banking', id: 'calculator' },
+    { label: 'Car Purchase', href: '/infinite-banking/car-purchase', id: 'car-purchase' },
+    { label: 'Mortgage Acceleration', href: '/infinite-banking/mortgage-acceleration', id: 'mortgage-acceleration' },
+    { label: 'IUL Comparison', href: '/infinite-banking/iul-comparison', id: 'iul-comparison' },
+    { label: 'Carrier Approval', href: '/infinite-banking/carrier-approval', id: 'carrier-approval' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{title} | The Infinite Wealth Group</title>
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="preload" as="font" type="font/woff2" href={interFont400} crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href={interFont800} crossorigin />
+    </head>
+    <body class="antialiased text-[#313131] bg-white">
+        <!-- Top Header -->
+        <header class="border-b border-gray-200 px-6 sm:px-12">
+            <div class="max-w-7xl mx-auto flex items-center justify-between py-4">
+                <a href="/infinite-banking" class="no-underline">
+                    <span class="text-xl font-bold tracking-tight text-[#7a00df]">The Infinite Wealth Group</span>
+                </a>
+                <a href="/" class="text-sm text-[#32373c]/60 no-underline hover:text-[#7a00df] transition-colors">Back to Home</a>
+            </div>
+        </header>
+
+        <div class="flex min-h-[calc(100vh-65px)]">
+            <!-- Sidebar -->
+            <aside class="w-64 border-r border-gray-200 bg-gray-50/50 hidden md:block shrink-0">
+                <nav class="p-6 sticky top-0">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-[#32373c]/40 mb-4">Calculators</p>
+                    <ul class="space-y-1">
+                        {sidebarItems.map(item => (
+                            <li>
+                                <a
+                                    href={item.href}
+                                    class:list={[
+                                        'block px-3 py-2 rounded-lg text-sm no-underline transition-colors',
+                                        activePage === item.id
+                                            ? 'bg-[#7a00df] text-white font-semibold'
+                                            : 'text-[#32373c] hover:bg-gray-100'
+                                    ]}
+                                >
+                                    {item.label}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            </aside>
+
+            <!-- Mobile nav -->
+            <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+                <nav class="flex">
+                    {sidebarItems.map(item => (
+                        <a
+                            href={item.href}
+                            class:list={[
+                                'flex-1 text-center py-3 text-xs no-underline transition-colors',
+                                activePage === item.id
+                                    ? 'text-[#7a00df] font-semibold bg-[#7a00df]/5'
+                                    : 'text-[#32373c]/60'
+                            ]}
+                        >
+                            {item.label}
+                        </a>
+                    ))}
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <main class="flex-1 px-6 sm:px-12 py-8 pb-24 md:pb-8 max-w-5xl">
+                <slot />
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="border-t border-gray-200 px-6 sm:px-12 py-6">
+            <div class="max-w-7xl mx-auto">
+                <p class="text-sm text-[#32373c]/60">&copy; {new Date().getFullYear()} The Infinite Wealth Group. All rights reserved.</p>
+            </div>
+        </footer>
+    </body>
+</html>

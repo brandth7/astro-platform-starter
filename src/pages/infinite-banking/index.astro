@@ -1,0 +1,299 @@
+---
+import IBCLayout from '../../layouts/IBCLayout.astro';
+---
+
+<IBCLayout title="Infinite Banking Calculator" activePage="calculator">
+    <h1 class="mb-4 text-[#7a00df]">Infinite Banking Calculator</h1>
+    <p class="text-lg mb-8 text-[#32373c]/70">What if your savings account could do more? Compare putting your money into a whole life insurance policy vs. a regular savings account. See how much more your money can grow — and the extra benefits you get on top.</p>
+
+    <!-- Mode Toggle -->
+    <div class="flex gap-2 mb-8">
+        <button id="btn-basic" class="btn btn-primary btn-sm">Basic</button>
+        <button id="btn-advanced" class="btn btn-outline btn-sm border-gray-300 text-[#32373c]">Advanced</button>
+    </div>
+
+    <!-- Policy Input Section -->
+    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8 max-w-lg">
+        <h2 class="text-xl font-bold mb-4 text-[#313131]">Policy Details</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Current Age</label>
+                <input type="number" id="input-age" value="30" min="18" max="80" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Annual Premium</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                    <input type="number" id="input-premium" value="6000" min="1200" step="600" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                </div>
+            </div>
+            <div id="advanced-fields" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Dividend Rate (%)</label>
+                    <input type="number" id="input-dividend" value="5.0" min="0" max="10" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Savings Account Rate (%)</label>
+                    <input type="number" id="input-savings-rate" value="1.0" min="0" max="10" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Policy Loan Rate (%)</label>
+                    <input type="number" id="input-policy-rate" value="5.0" min="0" max="10" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Base / PUA Split</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="input-base-pct" value="30" min="10" max="50" class="input input-bordered w-20 bg-white text-[#313131] border-gray-300 text-center" />
+                        <span class="text-[#32373c]/60">/</span>
+                        <input type="number" id="input-pua-pct" value="70" min="50" max="90" class="input input-bordered w-20 bg-white text-[#313131] border-gray-300 text-center" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <div class="mb-10">
+        <button id="btn-calculate" class="btn btn-primary btn-lg sm:btn-wide">Calculate</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="hidden space-y-10 mb-16">
+        <!-- Summary Cards -->
+        <div id="summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+        <!-- Projection Table -->
+        <div>
+            <h2 class="text-2xl font-bold mb-4 text-[#313131]">Year-by-Year Comparison</h2>
+            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-[#32373c]/60">
+                            <th class="bg-gray-50">Year</th>
+                            <th class="bg-gray-50">Age</th>
+                            <th class="bg-gray-50 text-right">What You Put In</th>
+                            <th class="bg-gray-50 text-right">Dividends Earned<br/><span class="font-normal text-xs">(Free growth)</span></th>
+                            <th class="bg-gray-50 text-right">Total Cash Value<br/><span class="font-normal text-xs">(Your money)</span></th>
+                            <th class="bg-gray-50 text-right">Death Benefit<br/><span class="font-normal text-xs">(For your family)</span></th>
+                            <th class="bg-gray-50 text-right">Savings Account<br/><span class="font-normal text-xs">(The normal way)</span></th>
+                            <th class="bg-gray-50 text-right">You're Ahead By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projection-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</IBCLayout>
+
+<style>
+    .table th, .table td {
+        padding: 0.5rem 0.75rem;
+        font-variant-numeric: tabular-nums;
+    }
+    .table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .table tbody tr:hover {
+        background: rgba(122,0,223,0.04);
+    }
+    input[type="number"]::-webkit-inner-spin-button {
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+    // ─── LocalStorage Helpers ───
+    function savePolicy() {
+        const data = {
+            age: val('input-age'),
+            premium: val('input-premium'),
+            dividendRate: val('input-dividend'),
+            savingsRate: val('input-savings-rate'),
+            policyLoanRate: val('input-policy-rate'),
+            basePct: val('input-base-pct'),
+        };
+        localStorage.setItem('iwg-policy', JSON.stringify(data));
+    }
+
+    function loadPolicy() {
+        try {
+            const raw = localStorage.getItem('iwg-policy');
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (data.age) (document.getElementById('input-age') as HTMLInputElement).value = data.age;
+            if (data.premium) (document.getElementById('input-premium') as HTMLInputElement).value = data.premium;
+            if (data.dividendRate) (document.getElementById('input-dividend') as HTMLInputElement).value = data.dividendRate;
+            if (data.savingsRate) (document.getElementById('input-savings-rate') as HTMLInputElement).value = data.savingsRate;
+            if (data.policyLoanRate) (document.getElementById('input-policy-rate') as HTMLInputElement).value = data.policyLoanRate;
+            if (data.basePct) {
+                (document.getElementById('input-base-pct') as HTMLInputElement).value = data.basePct;
+                (document.getElementById('input-pua-pct') as HTMLInputElement).value = String(100 - Number(data.basePct));
+            }
+        } catch {}
+    }
+
+    // ─── Mode Toggle ───
+    const btnBasic = document.getElementById('btn-basic') as HTMLButtonElement;
+    const btnAdvanced = document.getElementById('btn-advanced') as HTMLButtonElement;
+    const advancedFields = document.getElementById('advanced-fields')!;
+
+    btnBasic.addEventListener('click', () => {
+        advancedFields.classList.add('hidden');
+        btnBasic.className = 'btn btn-primary btn-sm';
+        btnAdvanced.className = 'btn btn-outline btn-sm border-gray-300 text-[#32373c]';
+    });
+    btnAdvanced.addEventListener('click', () => {
+        advancedFields.classList.remove('hidden');
+        btnAdvanced.className = 'btn btn-primary btn-sm';
+        btnBasic.className = 'btn btn-outline btn-sm border-gray-300 text-[#32373c]';
+    });
+
+    // ─── Base/PUA Split Sync ───
+    const basePctInput = document.getElementById('input-base-pct') as HTMLInputElement;
+    const puaPctInput = document.getElementById('input-pua-pct') as HTMLInputElement;
+    basePctInput.addEventListener('input', () => {
+        puaPctInput.value = String(100 - Number(basePctInput.value));
+    });
+
+    // ─── Helpers ───
+    function val(id: string): number {
+        return Number((document.getElementById(id) as HTMLInputElement).value);
+    }
+    function fmt(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    // ─── Cash Value Model ───
+    function buildProjection(age: number, premium: number, divRate: number, basePct: number) {
+        const years = 100 - age;
+        const puaPct = 1 - basePct;
+        const rows = [];
+        let cashValue = 0;
+        let deathBenefit = premium * 10;
+
+        function puaEfficiency(yr: number): number {
+            if (yr === 1) return 0.82;
+            if (yr === 2) return 0.88;
+            if (yr === 3) return 0.92;
+            if (yr <= 5) return 0.94;
+            if (yr <= 10) return 0.96;
+            return 0.97;
+        }
+
+        function baseCVContribution(yr: number, basePrem: number): number {
+            if (yr <= 2) return basePrem * 0.03;
+            if (yr <= 5) return basePrem * 0.12;
+            if (yr <= 10) return basePrem * 0.25;
+            if (yr <= 20) return basePrem * 0.40;
+            return basePrem * 0.55;
+        }
+
+        const premiumPayingYears = Math.min(years, 65);
+
+        for (let yr = 1; yr <= years; yr++) {
+            const paying = yr <= premiumPayingYears && (age + yr - 1) < 100;
+            const annualPremium = paying ? premium : 0;
+            const basePremium = annualPremium * basePct;
+            const pua = annualPremium * puaPct;
+
+            const dividend = cashValue * divRate;
+            const puaCashAdd = pua * puaEfficiency(yr);
+            const baseCashAdd = baseCVContribution(yr, basePremium);
+            cashValue = cashValue + dividend + puaCashAdd + baseCashAdd;
+
+            if (paying) {
+                deathBenefit += pua * 1.1 + dividend * 0.5;
+            } else {
+                deathBenefit = Math.max(deathBenefit, cashValue * 1.05);
+            }
+
+            rows.push({ year: yr, age: age + yr, annualPremium, dividend, cashValue, deathBenefit });
+        }
+        return rows;
+    }
+
+    // ─── Savings Model ───
+    function buildSavings(premium: number, savingsRate: number, years: number) {
+        const rows = [];
+        let balance = 0;
+        for (let yr = 1; yr <= years; yr++) {
+            balance = balance * (1 + savingsRate) + premium;
+            rows.push({ year: yr, balance });
+        }
+        return rows;
+    }
+
+    // ─── Load saved policy on page load ───
+    loadPolicy();
+
+    // ─── Calculate ───
+    document.getElementById('btn-calculate')!.addEventListener('click', () => {
+        const age = val('input-age');
+        const premium = val('input-premium');
+        const divRate = val('input-dividend') / 100;
+        const savingsRate = val('input-savings-rate') / 100;
+        const basePct = val('input-base-pct') / 100;
+
+        // Save to localStorage for other pages
+        savePolicy();
+
+        const projection = buildProjection(age, premium, divRate, basePct);
+        const savings = buildSavings(premium, savingsRate, projection.length);
+
+        // Summary
+        const yr10 = projection[Math.min(9, projection.length - 1)];
+        const sv10 = savings[Math.min(9, savings.length - 1)];
+        const yr20 = projection[Math.min(19, projection.length - 1)];
+        const sv20 = savings[Math.min(19, savings.length - 1)];
+        const yr30 = projection[Math.min(29, projection.length - 1)];
+        const sv30 = savings[Math.min(29, savings.length - 1)];
+        const final = projection[projection.length - 1];
+        const finalSv = savings[savings.length - 1];
+
+        document.getElementById('summary-cards')!.innerHTML = `
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Year 10 Cash Value</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(yr10.cashValue)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">Savings: ${fmt(sv10.balance)}</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Year 20 Cash Value</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(yr20.cashValue)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">Savings: ${fmt(sv20.balance)}</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Year 30 Cash Value</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(yr30.cashValue)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">Savings: ${fmt(sv30.balance)}</div>
+            </div>
+            <div class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20">
+                <div class="text-sm text-[#32373c]/60 mb-1">Death Benefit</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(final.deathBenefit)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">Tax-free to beneficiaries</div>
+            </div>
+        `;
+
+        // Table
+        const projBody = document.getElementById('projection-body')!;
+        projBody.innerHTML = projection.map((r, i) => {
+            const sv = savings[i];
+            const advantage = r.cashValue - sv.balance;
+            return `
+                <tr>
+                    <td>${r.year}</td>
+                    <td>${r.age}</td>
+                    <td class="text-right">${r.annualPremium > 0 ? fmt(r.annualPremium) : '—'}</td>
+                    <td class="text-right text-emerald-600">${r.dividend > 0 ? fmt(r.dividend) : '—'}</td>
+                    <td class="text-right font-semibold text-[#7a00df]">${fmt(r.cashValue)}</td>
+                    <td class="text-right">${fmt(r.deathBenefit)}</td>
+                    <td class="text-right">${fmt(sv.balance)}</td>
+                    <td class="text-right ${advantage >= 0 ? 'text-emerald-600' : 'text-red-500'} font-semibold">${advantage >= 0 ? '+' : ''}${fmt(advantage)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        document.getElementById('results')!.classList.remove('hidden');
+        document.getElementById('results')!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+</script>

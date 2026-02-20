@@ -1,0 +1,499 @@
+---
+import IBCLayout from '../../layouts/IBCLayout.astro';
+---
+
+<IBCLayout title="Mortgage Acceleration" activePage="mortgage-acceleration">
+    <h1 class="mb-4 text-[#7a00df]">Mortgage Acceleration</h1>
+    <p class="text-lg mb-8 text-[#32373c]/70">Pay off your home faster using your life insurance policy as a tool. Instead of sending your mortgage payment straight to the bank for 30 years, you put that money to work inside your policy first — and use it to knock out your mortgage in a fraction of the time.</p>
+
+    <!-- Inputs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Mortgage Details -->
+        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-[#313131]">Mortgage Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Mortgage Balance</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                        <input type="number" id="input-mortgage-balance" value="300000" min="10000" step="10000" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Mortgage Rate (%)</label>
+                    <input type="number" id="input-mortgage-rate" value="6.5" min="0" max="15" step="0.125" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Remaining Term (years)</label>
+                    <input type="number" id="input-mortgage-term" value="30" min="5" max="30" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div class="pt-2 border-t border-gray-200">
+                    <div class="text-sm text-[#32373c]/50">Monthly Mortgage Payment:</div>
+                    <div class="text-lg font-bold text-[#313131]" id="disp-mtg-payment">—</div>
+                    <div class="text-xs text-[#7a00df]/70 mt-1">This becomes your annual policy premium</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income & Expenses -->
+        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-[#313131]">Velocity Banking Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Monthly Income</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                        <input type="number" id="input-income" value="8000" min="1000" step="500" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Monthly Expenses (excluding mortgage)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                        <input type="number" id="input-expenses" value="4000" min="0" step="500" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Chunk Size (policy loan per cycle)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                        <input type="number" id="input-chunk" value="30000" min="5000" step="5000" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                    </div>
+                    <p class="text-xs text-[#32373c]/50 mt-1">Think of this as the big payment you drop on your mortgage each time your policy has enough saved up</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Dividend Rate (%)</label>
+                    <input type="number" id="input-dividend" value="5.0" min="0" max="10" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+                <div>
+                    <label class="block text-sm text-[#32373c]/70 mb-1">Policy Loan Rate (%) — Simple Interest</label>
+                    <input type="number" id="input-policy-rate" value="5.0" min="0" max="10" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <div class="mb-10">
+        <button id="btn-calculate" class="btn btn-primary btn-lg sm:btn-wide">Calculate</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="hidden space-y-10 mb-16">
+        <div id="summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+        <!-- How it works -->
+        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <h3 class="font-bold text-[#313131] mb-3">How Does This Work? (The Simple Version)</h3>
+            <p class="text-sm text-[#32373c]/70 mb-4">Imagine you have a piggy bank that grows your money while you use it. That's basically what your life insurance policy does here.</p>
+            <ol class="list-decimal list-inside space-y-3 text-sm text-[#32373c]/80">
+                <li>
+                    <strong>You save into your policy.</strong>
+                    Your mortgage payment (<strong id="step-mtg-pmt">$1,896</strong>/mo) goes into your whole life insurance policy instead of just sitting in a bank account. This money grows inside the policy.
+                </li>
+                <li>
+                    <strong>You borrow a big chunk from your policy and pay down your mortgage.</strong>
+                    Once enough money builds up, you borrow <strong id="step-chunk">$30,000</strong> from your policy and make a big lump payment on your mortgage. This instantly reduces how much you owe — and the less you owe, the less interest the bank charges you.
+                </li>
+                <li>
+                    <strong>You pay back the policy loan with your leftover income.</strong>
+                    Each month, you have <strong id="step-surplus">$0</strong> left over after paying your bills (your income minus your expenses). That leftover money goes toward paying back the policy loan.
+                </li>
+                <li>
+                    <strong>Rinse and repeat.</strong>
+                    Once the policy loan is paid down, you borrow another chunk and hit the mortgage again. Each cycle knocks more and more off your mortgage balance.
+                </li>
+                <li>
+                    <strong>Your money keeps growing the whole time.</strong>
+                    Here's the best part: even while you have a loan out, your <em>entire</em> cash value keeps earning dividends. It's like your savings account keeps growing even while you're using the money. This is called "non-direct recognition" — the insurance company doesn't reduce your earnings just because you borrowed.
+                </li>
+                <li>
+                    <strong>When the mortgage is gone, you still have your savings.</strong>
+                    Once your home is paid off, you still have all the cash value in your policy plus a death benefit for your family. With a traditional mortgage, once it's paid off... you just have the house.
+                </li>
+            </ol>
+        </div>
+
+        <!-- Traditional Mortgage -->
+        <div>
+            <h2 class="text-2xl font-bold mb-2 text-[#313131]">Traditional Mortgage</h2>
+            <p class="text-sm text-[#32373c]/60 mb-4">This is what happens if you just make your normal monthly payment to the bank for the full life of the loan. Notice how much of your early payments go to interest — the bank gets paid first.</p>
+            <div class="overflow-x-auto rounded-xl border border-gray-200 mb-2">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-[#32373c]/60">
+                            <th class="bg-gray-50">Year</th>
+                            <th class="bg-gray-50 text-right">What You Still Owe</th>
+                            <th class="bg-gray-50 text-right">Interest to Bank (Yr)</th>
+                            <th class="bg-gray-50 text-right">Paid Toward Home (Yr)</th>
+                            <th class="bg-gray-50 text-right">Total Interest Paid So Far</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trad-body"></tbody>
+                </table>
+            </div>
+            <p class="text-xs text-[#32373c]/40 italic mb-10" id="trad-note"></p>
+        </div>
+
+        <!-- IBC Velocity Banking -->
+        <div>
+            <h2 class="text-2xl font-bold mb-2 text-[#7a00df]">IBC Velocity Banking</h2>
+            <p class="text-sm text-[#32373c]/60 mb-4">Now look at the same mortgage, but with your money flowing through your life insurance policy first. Watch how fast the mortgage drops — and how your cash value and dividends keep growing the whole time.</p>
+            <div class="overflow-x-auto rounded-xl border border-gray-200 mb-2">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-[#32373c]/60">
+                            <th class="bg-gray-50">Year</th>
+                            <th class="bg-gray-50 text-right">What You Still Owe</th>
+                            <th class="bg-gray-50 text-right">Mtg Interest (Yr)</th>
+                            <th class="bg-gray-50 text-right">Your Savings<br/><span class="font-normal text-xs">(Cash Value)</span></th>
+                            <th class="bg-gray-50 text-right">Dividends Earned<br/><span class="font-normal text-xs">(Free growth)</span></th>
+                            <th class="bg-gray-50 text-right">Policy Loan<br/><span class="font-normal text-xs">(You owe back)</span></th>
+                            <th class="bg-gray-50 text-right">Loan Interest<br/><span class="font-normal text-xs">(Cost to insurer)</span></th>
+                            <th class="bg-gray-50 text-right">Net Worth<br/><span class="font-normal text-xs">(Savings − Loan)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ibc-body"></tbody>
+                </table>
+            </div>
+            <div class="space-y-1 mb-4">
+                <p class="text-xs text-[#32373c]/40 italic" id="ibc-note"></p>
+                <p class="text-xs text-emerald-600/60 italic">Green rows = mortgage is paid off. You still keep paying back the policy loan with your surplus + former mortgage payment.</p>
+                <p class="text-xs text-[#7a00df]/60 italic">Purple "Your Savings" column = your cash value keeps growing because dividends are earned on ALL your money, even the part you borrowed. That's the power of non-direct recognition.</p>
+            </div>
+        </div>
+    </div>
+</IBCLayout>
+
+<style>
+    .table th, .table td {
+        padding: 0.5rem 0.75rem;
+        font-variant-numeric: tabular-nums;
+    }
+    .table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .table tbody tr:hover {
+        background: rgba(122,0,223,0.04);
+    }
+    .table tbody tr.mortgage-paid {
+        background: rgba(5,150,105,0.06);
+    }
+    input[type="number"]::-webkit-inner-spin-button {
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+    // ─── Helpers ───
+    function val(id: string): number {
+        return Number((document.getElementById(id) as HTMLInputElement).value);
+    }
+    function fmt(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function fmtFull(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calcMonthlyPayment(principal: number, annualRate: number, years: number): number {
+        const r = annualRate / 12;
+        const n = years * 12;
+        if (r === 0) return principal / n;
+        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    // ─── Cash Value helpers ───
+    function puaEfficiency(yr: number): number {
+        if (yr === 1) return 0.82;
+        if (yr === 2) return 0.88;
+        if (yr === 3) return 0.92;
+        if (yr <= 5) return 0.94;
+        if (yr <= 10) return 0.96;
+        return 0.97;
+    }
+    function baseCVContribution(yr: number, basePrem: number): number {
+        if (yr <= 2) return basePrem * 0.03;
+        if (yr <= 5) return basePrem * 0.12;
+        if (yr <= 10) return basePrem * 0.25;
+        if (yr <= 20) return basePrem * 0.40;
+        return basePrem * 0.55;
+    }
+
+    // ─── Live mortgage payment display ───
+    function updateMtgDisplay() {
+        const bal = val('input-mortgage-balance');
+        const rate = val('input-mortgage-rate') / 100;
+        const term = val('input-mortgage-term');
+        const mp = calcMonthlyPayment(bal, rate, term);
+        document.getElementById('disp-mtg-payment')!.textContent = fmtFull(mp) + '/mo (' + fmt(mp * 12) + '/yr)';
+    }
+    document.getElementById('input-mortgage-balance')!.addEventListener('input', updateMtgDisplay);
+    document.getElementById('input-mortgage-rate')!.addEventListener('input', updateMtgDisplay);
+    document.getElementById('input-mortgage-term')!.addEventListener('input', updateMtgDisplay);
+    updateMtgDisplay();
+
+    // ─── Load dividend/loan rate from localStorage ───
+    try {
+        const raw = localStorage.getItem('iwg-policy');
+        if (raw) {
+            const data = JSON.parse(raw);
+            if (data.dividendRate) (document.getElementById('input-dividend') as HTMLInputElement).value = data.dividendRate;
+            if (data.policyLoanRate) (document.getElementById('input-policy-rate') as HTMLInputElement).value = data.policyLoanRate;
+        }
+    } catch {}
+
+    // ─── Calculate ───
+    document.getElementById('btn-calculate')!.addEventListener('click', () => {
+        const mtgBalance = val('input-mortgage-balance');
+        const mtgRate = val('input-mortgage-rate') / 100;
+        const mtgTerm = val('input-mortgage-term');
+        const monthlyIncome = val('input-income');
+        const monthlyExpenses = val('input-expenses');
+        const chunkSize = val('input-chunk');
+        const divRate = val('input-dividend') / 100;
+        const loanRate = val('input-policy-rate') / 100;
+        const basePct = 0.30; // default base/PUA split
+
+        const mtgMonthly = calcMonthlyPayment(mtgBalance, mtgRate, mtgTerm);
+        const mr = mtgRate / 12;
+
+        // Annual premium = mortgage payment × 12
+        const annualPremium = mtgMonthly * 12;
+        const monthlySurplus = monthlyIncome - monthlyExpenses;
+
+        // Update the "how it works" display
+        document.getElementById('step-mtg-pmt')!.textContent = fmtFull(mtgMonthly);
+        document.getElementById('step-chunk')!.textContent = fmt(chunkSize);
+        document.getElementById('step-surplus')!.textContent = fmt(monthlySurplus);
+
+        // ═══════════════════════════════════════
+        // TRADITIONAL MORTGAGE
+        // ═══════════════════════════════════════
+        const tradRows: any[] = [];
+        let tradBal = mtgBalance;
+        let tradCumInterest = 0;
+
+        for (let yr = 1; yr <= mtgTerm; yr++) {
+            let yrInterest = 0;
+            let yrPrincipal = 0;
+            for (let m = 0; m < 12; m++) {
+                if (tradBal <= 0.01) { tradBal = 0; break; }
+                const intPmt = tradBal * mr;
+                const prinPmt = Math.min(mtgMonthly - intPmt, tradBal);
+                yrInterest += intPmt;
+                yrPrincipal += prinPmt;
+                tradBal -= prinPmt;
+            }
+            tradCumInterest += yrInterest;
+            tradRows.push({
+                year: yr,
+                balance: Math.max(0, tradBal),
+                interest: yrInterest,
+                principal: yrPrincipal,
+                cumInterest: tradCumInterest
+            });
+            if (tradBal <= 0) break;
+        }
+
+        const tradTotalInterest = tradCumInterest;
+        const tradYears = tradRows.length;
+
+        // ═══════════════════════════════════════
+        // IBC VELOCITY BANKING
+        // ═══════════════════════════════════════
+        // Month-by-month simulation:
+        // - Premium (= mortgage payment) goes into policy each month
+        // - Cash value grows
+        // - When available CV >= chunk size, take policy loan and drop on mortgage principal
+        // - Monthly surplus (income - expenses) pays down the policy loan
+        // - Policy loan interest = simple interest annually on outstanding balance
+        // - Dividends on FULL cash value (non-direct recognition)
+        // - Once mortgage paid off, surplus continues paying down policy loan
+
+        const ibcRows: any[] = [];
+        let ibcMtgBal = mtgBalance;
+        let cashValue = 0;
+        let policyLoanBal = 0;
+        let ibcCumMtgInterest = 0;
+        let ibcCumDividends = 0;
+        let ibcCumLoanInterest = 0;
+        let mortgagePaidOffYear = 0;
+        let policyLoanPaidOffYear = 0;
+        const maxYears = 50;
+        let policyYear = 0;
+
+        for (let yr = 1; yr <= maxYears; yr++) {
+            policyYear = yr;
+            let yrMtgInterest = 0;
+            let yrDividend = 0;
+            let yrLoanInterest = 0;
+
+            for (let m = 1; m <= 12; m++) {
+                // ── Monthly premium into policy (= mortgage payment / 12 worth of annual)
+                const monthlyPremium = annualPremium / 12;
+                const basePrem = monthlyPremium * basePct;
+                const puaPrem = monthlyPremium * (1 - basePct);
+
+                // Cash value growth from this month's premium (simplified monthly)
+                const puaAdd = puaPrem * puaEfficiency(yr);
+                const baseAdd = baseCVContribution(yr, basePrem);
+                cashValue += puaAdd + baseAdd;
+
+                // ── Mortgage payment (if mortgage still active)
+                if (ibcMtgBal > 0.01) {
+                    const intPmt = ibcMtgBal * mr;
+                    const prinPmt = Math.min(mtgMonthly - intPmt, ibcMtgBal);
+                    yrMtgInterest += intPmt;
+                    ibcMtgBal = Math.max(0, ibcMtgBal - prinPmt);
+                }
+
+                // ── Monthly surplus pays down policy loan
+                if (policyLoanBal > 0) {
+                    const payment = Math.min(monthlySurplus, policyLoanBal);
+                    policyLoanBal = Math.max(0, policyLoanBal - payment);
+                } else if (ibcMtgBal <= 0 && policyLoanBal <= 0) {
+                    // Both paid off — surplus goes to cash value or savings
+                }
+
+                // ── If mortgage is paid off, redirect mortgage payment to policy loan too
+                if (ibcMtgBal <= 0 && policyLoanBal > 0) {
+                    const redirected = Math.min(mtgMonthly, policyLoanBal);
+                    policyLoanBal = Math.max(0, policyLoanBal - redirected);
+                }
+
+                // ── Check if we can take a chunk (velocity banking cycle)
+                if (ibcMtgBal > 0) {
+                    const availableCV = cashValue - policyLoanBal;
+                    if (availableCV >= chunkSize) {
+                        const loanAmt = Math.min(chunkSize, ibcMtgBal);
+                        if (loanAmt > 100) {
+                            policyLoanBal += loanAmt;
+                            ibcMtgBal = Math.max(0, ibcMtgBal - loanAmt);
+                        }
+                    }
+                }
+            }
+
+            // ── End of year: dividends on FULL cash value (non-direct recognition)
+            yrDividend = cashValue * divRate;
+            cashValue += yrDividend;
+            ibcCumDividends += yrDividend;
+
+            // ── End of year: simple interest on policy loan balance (paid to insurer)
+            yrLoanInterest = policyLoanBal * loanRate;
+            policyLoanBal += yrLoanInterest; // interest capitalizes onto loan balance
+            ibcCumLoanInterest += yrLoanInterest;
+
+            ibcCumMtgInterest += yrMtgInterest;
+
+            if (ibcMtgBal <= 0 && mortgagePaidOffYear === 0) {
+                mortgagePaidOffYear = yr;
+            }
+            if (policyLoanBal <= 0 && mortgagePaidOffYear > 0 && policyLoanPaidOffYear === 0) {
+                policyLoanPaidOffYear = yr;
+            }
+
+            const netPosition = cashValue - policyLoanBal;
+
+            ibcRows.push({
+                year: yr,
+                mtgBalance: Math.max(0, ibcMtgBal),
+                mtgInterest: yrMtgInterest,
+                cashValue,
+                dividend: yrDividend,
+                policyLoanBal: Math.max(0, policyLoanBal),
+                loanInterest: yrLoanInterest,
+                netPosition
+            });
+
+            // Stop once both are paid off + a couple extra years
+            if (ibcMtgBal <= 0 && policyLoanBal <= 0 && yr > (mortgagePaidOffYear || 0) + 2) {
+                break;
+            }
+        }
+
+        const ibcTotalMtgInterest = ibcCumMtgInterest;
+        const interestSaved = tradTotalInterest - ibcTotalMtgInterest;
+        const yearsSaved = tradYears - (mortgagePaidOffYear || tradYears);
+        const finalRow = ibcRows[ibcRows.length - 1];
+
+        // ─── Summary Cards ───
+        document.getElementById('summary-cards')!.innerHTML = `
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">The Normal Way</div>
+                <div class="text-2xl font-bold text-red-500">${fmt(tradTotalInterest)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">paid in interest over ${tradYears} years</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">This is money that goes to the bank — you never see it again.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">With IBC: Home Paid Off In</div>
+                <div class="text-2xl font-bold text-emerald-600">${mortgagePaidOffYear || '—'} years</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">${yearsSaved > 0 ? 'That\'s ' + yearsSaved + ' years sooner!' : ''}</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">You only pay ${fmt(ibcTotalMtgInterest)} in mortgage interest instead of ${fmt(tradTotalInterest)}.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Free Money You Earned (Dividends)</div>
+                <div class="text-2xl font-bold text-emerald-600">${fmt(ibcCumDividends)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">Your policy earned this just by sitting there</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">You did pay ${fmt(ibcCumLoanInterest)} in loan interest to the insurance company — but the dividends more than made up for it.</div>
+            </div>
+            <div class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20">
+                <div class="text-sm text-[#32373c]/60 mb-1">What You Walk Away With</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(finalRow.cashValue)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">in cash value (your money, accessible anytime)</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">With the normal way, once the mortgage is paid off you have $0 in extra savings. With IBC, you have ${fmt(finalRow.netPosition)} plus a death benefit for your family.</div>
+            </div>
+        `;
+
+        // ─── Traditional Table ───
+        document.getElementById('trad-body')!.innerHTML = tradRows.map(r => `
+            <tr>
+                <td>${r.year}</td>
+                <td class="text-right">${fmt(r.balance)}</td>
+                <td class="text-right">${fmtFull(r.interest)}</td>
+                <td class="text-right">${fmtFull(r.principal)}</td>
+                <td class="text-right">${fmt(r.cumInterest)}</td>
+            </tr>
+        `).join('');
+
+        // Add note below traditional table
+        const yr1Interest = tradRows[0]?.interest || 0;
+        const yr1Principal = tradRows[0]?.principal || 0;
+        document.getElementById('trad-note')!.textContent =
+            `Notice: In year 1, ${fmt(yr1Interest)} of your payments went to interest and only ${fmt(yr1Principal)} actually paid down your home. ` +
+            `By the end, you'll pay ${fmt(tradTotalInterest)} in interest alone — that's ${Math.round(tradTotalInterest / mtgBalance * 100)}% of what you originally borrowed, just in interest.`;
+
+        // ─── IBC Velocity Banking Table ───
+        document.getElementById('ibc-body')!.innerHTML = ibcRows.map((r, i) => {
+            // Add inline notes for key moments
+            let note = '';
+            if (r.mtgBalance <= 0 && (i === 0 || ibcRows[i - 1].mtgBalance > 0)) {
+                note = `<tr class="bg-emerald-50"><td colspan="8" class="text-sm text-emerald-700 py-2 px-3 font-semibold">Your mortgage is paid off! Now your extra money goes toward paying back the policy loan.</td></tr>`;
+            }
+            if (r.policyLoanBal <= 0 && i > 0 && ibcRows[i - 1].policyLoanBal > 0) {
+                note = `<tr class="bg-[#7a00df]/5"><td colspan="8" class="text-sm text-[#7a00df] py-2 px-3 font-semibold">Policy loan is fully repaid! Everything in your cash value is now 100% yours — no debt against it.</td></tr>`;
+            }
+            return note + `
+            <tr class="${r.mtgBalance <= 0 ? 'mortgage-paid' : ''}">
+                <td>${r.year}</td>
+                <td class="text-right">${r.mtgBalance > 0 ? fmt(r.mtgBalance) : '<span class="text-emerald-600 font-semibold">PAID OFF</span>'}</td>
+                <td class="text-right">${fmtFull(r.mtgInterest)}</td>
+                <td class="text-right font-semibold text-[#7a00df]">${fmt(r.cashValue)}</td>
+                <td class="text-right text-emerald-600">${fmt(r.dividend)}</td>
+                <td class="text-right">${r.policyLoanBal > 0 ? fmt(r.policyLoanBal) : '—'}</td>
+                <td class="text-right text-red-400">${r.loanInterest > 0 ? fmtFull(r.loanInterest) : '—'}</td>
+                <td class="text-right font-semibold ${r.netPosition >= 0 ? 'text-[#7a00df]' : 'text-red-500'}">${fmt(r.netPosition)}</td>
+            </tr>`;
+        }).join('');
+
+        // Add note below IBC table
+        document.getElementById('ibc-note')!.textContent =
+            `Bottom line: Instead of paying the bank ${fmt(tradTotalInterest)} in interest over ${tradYears} years and ending up with nothing extra, ` +
+            `you paid off your home in ${mortgagePaidOffYear || '—'} years and walked away with ${fmt(finalRow.cashValue)} in cash value. ` +
+            `That's a ${fmt(tradTotalInterest - ibcTotalMtgInterest)} swing in your favor on interest alone — plus you earned ${fmt(ibcCumDividends)} in dividends.`;
+
+        document.getElementById('results')!.classList.remove('hidden');
+        document.getElementById('results')!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+</script>

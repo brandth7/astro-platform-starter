@@ -1,0 +1,333 @@
+---
+import IBCLayout from '../../layouts/IBCLayout.astro';
+---
+
+<IBCLayout title="Car Purchase Comparison" activePage="car-purchase">
+    <h1 class="mb-4 text-[#7a00df]">Car Purchase Comparison</h1>
+    <p class="text-lg mb-8 text-[#32373c]/70">When you need to buy a car, you have two choices: borrow from a bank and pay them interest, or borrow from your own policy and keep the interest working for you. See which way saves you more money.</p>
+
+    <!-- Policy Summary -->
+    <div id="policy-summary" class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20 mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-[#313131]">Your Policy</h2>
+            <a href="/infinite-banking" class="text-sm text-[#7a00df] no-underline hover:underline">Edit Policy &rarr;</a>
+        </div>
+        <div id="policy-info" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div><span class="text-[#32373c]/50">Age:</span> <strong id="disp-age">30</strong></div>
+            <div><span class="text-[#32373c]/50">Premium:</span> <strong id="disp-premium">$6,000</strong></div>
+            <div><span class="text-[#32373c]/50">Dividend:</span> <strong id="disp-dividend">5.0%</strong></div>
+            <div><span class="text-[#32373c]/50">Loan Rate:</span> <strong id="disp-loan-rate">5.0%</strong></div>
+        </div>
+    </div>
+
+    <!-- Car Details -->
+    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8 max-w-lg">
+        <h2 class="text-xl font-bold mb-4 text-[#313131]">Car Details</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Car Price</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                    <input type="number" id="input-car-price" value="35000" min="1000" step="1000" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Loan Term (years)</label>
+                <input type="number" id="input-car-term" value="5" min="1" max="8" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Bank Auto Loan Rate (%)</label>
+                <input type="number" id="input-bank-rate" value="7.0" min="0" max="20" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Purchase in Policy Year</label>
+                <input type="number" id="input-purchase-year" value="5" min="1" max="50" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <div class="mb-10">
+        <button id="btn-calculate" class="btn btn-primary btn-lg sm:btn-wide">Compare</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="hidden space-y-10 mb-16">
+        <div id="summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+        <div>
+            <h2 class="text-2xl font-bold mb-4 text-[#313131]">Year-by-Year Comparison</h2>
+            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-[#32373c]/60">
+                            <th class="bg-gray-50">Year</th>
+                            <th class="bg-gray-50 text-right">Bank: You Owe</th>
+                            <th class="bg-gray-50 text-right">Bank: Interest<br/><span class="font-normal text-xs">(Gone forever)</span></th>
+                            <th class="bg-gray-50 text-right">Bank: Total Int.</th>
+                            <th class="bg-gray-50 text-right">Policy: You Owe</th>
+                            <th class="bg-gray-50 text-right">Policy: Interest<br/><span class="font-normal text-xs">(To insurer)</span></th>
+                            <th class="bg-gray-50 text-right">Policy: Total Int.</th>
+                            <th class="bg-gray-50 text-right">Dividends Earned<br/><span class="font-normal text-xs">(Free growth)</span></th>
+                            <th class="bg-gray-50 text-right">You Save</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</IBCLayout>
+
+<style>
+    .table th, .table td {
+        padding: 0.5rem 0.75rem;
+        font-variant-numeric: tabular-nums;
+    }
+    .table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .table tbody tr:hover {
+        background: rgba(122,0,223,0.04);
+    }
+    input[type="number"]::-webkit-inner-spin-button {
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+    // ─── Load Policy from localStorage ───
+    let policyAge = 30;
+    let policyPremium = 6000;
+    let policyDivRate = 5.0;
+    let policyLoanRate = 5.0;
+    let policyBasePct = 30;
+
+    try {
+        const raw = localStorage.getItem('iwg-policy');
+        if (raw) {
+            const data = JSON.parse(raw);
+            policyAge = Number(data.age) || 30;
+            policyPremium = Number(data.premium) || 6000;
+            policyDivRate = Number(data.dividendRate) || 5.0;
+            policyLoanRate = Number(data.policyLoanRate) || 5.0;
+            policyBasePct = Number(data.basePct) || 30;
+        }
+    } catch {}
+
+    // Display policy summary
+    function fmtSimple(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    document.getElementById('disp-age')!.textContent = String(policyAge);
+    document.getElementById('disp-premium')!.textContent = fmtSimple(policyPremium);
+    document.getElementById('disp-dividend')!.textContent = policyDivRate + '%';
+    document.getElementById('disp-loan-rate')!.textContent = policyLoanRate + '%';
+
+    // ─── Helpers ───
+    function val(id: string): number {
+        return Number((document.getElementById(id) as HTMLInputElement).value);
+    }
+    function fmt(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function fmtFull(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ─── Amortization ───
+    function monthlyPayment(principal: number, annualRate: number, years: number): number {
+        const r = annualRate / 12;
+        const n = years * 12;
+        if (r === 0) return principal / n;
+        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function amortizationSchedule(principal: number, annualRate: number, years: number) {
+        const r = annualRate / 12;
+        const mp = monthlyPayment(principal, annualRate, years);
+        const schedule = [];
+        let balance = principal;
+        let cumInterest = 0;
+
+        for (let yr = 1; yr <= years; yr++) {
+            let yearInterest = 0;
+            let yearPrincipal = 0;
+            for (let m = 0; m < 12; m++) {
+                if (balance <= 0.01) { balance = 0; break; }
+                const intPmt = balance * r;
+                const prinPmt = Math.min(mp - intPmt, balance);
+                yearInterest += intPmt;
+                yearPrincipal += prinPmt;
+                balance -= prinPmt;
+            }
+            cumInterest += yearInterest;
+            schedule.push({
+                year: yr,
+                interest: yearInterest,
+                balance: Math.max(0, balance),
+                cumInterest
+            });
+        }
+        return schedule;
+    }
+
+    // ─── Cash Value Model (to check available CV) ───
+    function getCashValueAtYear(year: number): number {
+        const divRate = policyDivRate / 100;
+        const basePct = policyBasePct / 100;
+        let cashValue = 0;
+
+        function puaEfficiency(yr: number): number {
+            if (yr === 1) return 0.82;
+            if (yr === 2) return 0.88;
+            if (yr === 3) return 0.92;
+            if (yr <= 5) return 0.94;
+            if (yr <= 10) return 0.96;
+            return 0.97;
+        }
+        function baseCVContribution(yr: number, basePrem: number): number {
+            if (yr <= 2) return basePrem * 0.03;
+            if (yr <= 5) return basePrem * 0.12;
+            if (yr <= 10) return basePrem * 0.25;
+            if (yr <= 20) return basePrem * 0.40;
+            return basePrem * 0.55;
+        }
+
+        for (let yr = 1; yr <= year; yr++) {
+            const annualPremium = policyPremium;
+            const basePremium = annualPremium * basePct;
+            const pua = annualPremium * (1 - basePct);
+            const dividend = cashValue * divRate;
+            cashValue += dividend + pua * puaEfficiency(yr) + baseCVContribution(yr, basePremium);
+        }
+        return cashValue;
+    }
+
+    // ─── Calculate ───
+    document.getElementById('btn-calculate')!.addEventListener('click', () => {
+        const carPrice = val('input-car-price');
+        const carTerm = val('input-car-term');
+        const bankRate = val('input-bank-rate') / 100;
+        const purchaseYear = val('input-purchase-year');
+        const divRate = policyDivRate / 100;
+        const loanRate = policyLoanRate / 100;
+
+        // Check cash value
+        const cvAtPurchase = getCashValueAtYear(purchaseYear);
+        if (cvAtPurchase < carPrice) {
+            document.getElementById('results')!.classList.remove('hidden');
+            document.getElementById('summary-cards')!.innerHTML = `
+                <div class="col-span-full bg-red-50 border border-red-200 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-red-700 mb-2">Insufficient Cash Value</h3>
+                    <p class="text-[#313131]">In policy year ${purchaseYear}, your cash value is <strong>${fmt(cvAtPurchase)}</strong> but the car costs <strong>${fmt(carPrice)}</strong>.</p>
+                    <p class="text-sm text-[#32373c]/70 mt-1">Try a later purchase year or a lower car price.</p>
+                </div>
+            `;
+            document.getElementById('comparison-body')!.innerHTML = '';
+            return;
+        }
+
+        // Bank auto loan (compound monthly amortization)
+        const bankSchedule = amortizationSchedule(carPrice, bankRate, carTerm);
+        const bankTotalInterest = bankSchedule[bankSchedule.length - 1].cumInterest;
+        const bankMonthly = monthlyPayment(carPrice, bankRate, carTerm);
+
+        // Policy loan — SIMPLE INTEREST annually, equal principal payments
+        // Interest is calculated once per year on outstanding balance (not compounded)
+        // Interest paid goes to insurance company (you don't get it back)
+        const annualPrincipalPayment = carPrice / carTerm;
+        const policySchedule: { year: number; interest: number; principalPmt: number; balance: number; cumInterest: number }[] = [];
+        let pBal = carPrice;
+        let pCumInterest = 0;
+        for (let yr = 1; yr <= carTerm; yr++) {
+            const yrInterest = pBal * loanRate; // simple interest on outstanding balance
+            pCumInterest += yrInterest;
+            pBal = Math.max(0, pBal - annualPrincipalPayment);
+            policySchedule.push({
+                year: yr,
+                interest: yrInterest,
+                principalPmt: annualPrincipalPayment,
+                balance: pBal,
+                cumInterest: pCumInterest
+            });
+        }
+        const policyTotalInterest = pCumInterest;
+
+        // Non-direct recognition: full CV earns dividends even with loan out
+        // Dividends earned on the loaned portion — this is your benefit
+        let cumDividends = 0;
+        let divBal = carPrice;
+        for (let yr = 0; yr < carTerm; yr++) {
+            cumDividends += divBal * divRate;
+            if (yr < policySchedule.length) {
+                divBal = policySchedule[yr].balance;
+            }
+        }
+
+        // Net advantage = Bank interest - Policy loan interest + Dividends earned
+        // Policy loan interest is a cost (paid to insurance co, not recovered)
+        const netAdvantage = bankTotalInterest - policyTotalInterest + cumDividends;
+
+        // Summary cards
+        document.getElementById('summary-cards')!.innerHTML = `
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Going Through the Bank</div>
+                <div class="text-2xl font-bold text-red-500">${fmt(bankTotalInterest)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">in interest (${fmtFull(bankMonthly)}/mo)</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">This is money you pay to the bank and never see again.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Going Through Your Policy</div>
+                <div class="text-2xl font-bold text-red-400">${fmt(policyTotalInterest)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">in interest (paid to insurance company)</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">You still pay interest, but it's less because it's simple interest — not compounding like the bank.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Dividends Your Money Earned</div>
+                <div class="text-2xl font-bold text-emerald-600">${fmt(cumDividends)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">while the loan was out</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">Even though you borrowed from your policy, your full cash value kept earning dividends. This is free growth you wouldn't get with a bank loan.</div>
+            </div>
+            <div class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20">
+                <div class="text-sm text-[#32373c]/60 mb-1">Total Money You Keep</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(netAdvantage)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">compared to going through the bank</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">This is the interest you saved + the dividends you earned − the interest you paid to the insurer. It's money that stays in your pocket.</div>
+            </div>
+        `;
+
+        // Table
+        let cumDiv = 0;
+        let divTrackBal = carPrice;
+        const compBody = document.getElementById('comparison-body')!;
+        compBody.innerHTML = '';
+        for (let yr = 0; yr < carTerm; yr++) {
+            const bs = bankSchedule[yr];
+            const ps = policySchedule[yr];
+            // Dividends on outstanding loan balance (non-direct recognition)
+            const yrDiv = divTrackBal * divRate;
+            cumDiv += yrDiv;
+            divTrackBal = ps.balance;
+            // Net = bank interest - policy interest + dividends earned
+            const netSavings = bs.cumInterest - ps.cumInterest + cumDiv;
+
+            compBody.innerHTML += `
+                <tr>
+                    <td>${yr + 1}</td>
+                    <td class="text-right">${fmtFull(bs.balance)}</td>
+                    <td class="text-right">${fmtFull(bs.interest)}</td>
+                    <td class="text-right">${fmtFull(bs.cumInterest)}</td>
+                    <td class="text-right">${fmtFull(ps.balance)}</td>
+                    <td class="text-right text-red-400">${fmtFull(ps.interest)}</td>
+                    <td class="text-right text-red-400">${fmtFull(ps.cumInterest)}</td>
+                    <td class="text-right text-emerald-600">${fmtFull(cumDiv)}</td>
+                    <td class="text-right font-semibold text-[#7a00df]">${fmtFull(netSavings)}</td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('results')!.classList.remove('hidden');
+        document.getElementById('results')!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+</script>

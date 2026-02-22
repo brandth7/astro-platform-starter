@@ -1,0 +1,313 @@
+---
+import IBCLayout from '../../layouts/IBCLayout.astro';
+---
+
+<IBCLayout title="Be Your Own Bank" activePage="be-your-own-bank">
+    <h1 class="mb-4 text-[#7a00df]">Be Your Own Bank</h1>
+    <p class="text-lg mb-8 text-[#32373c]/70">You already have cash value in your policy. When you need a loan, you can borrow from a bank and pay them interest, or borrow from your own policy and keep your money working for you. Enter your numbers below and see how much you save.</p>
+
+    <!-- Policy Summary -->
+    <div id="policy-summary" class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20 mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-[#313131]">Your Policy</h2>
+            <a href="/infinite-banking" class="text-sm text-[#7a00df] no-underline hover:underline">Edit Policy &rarr;</a>
+        </div>
+        <div id="policy-info" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+            <div><span class="text-[#32373c]/50">Dividend Rate:</span> <strong id="disp-dividend">5.0%</strong></div>
+            <div><span class="text-[#32373c]/50">Policy Loan Rate:</span> <strong id="disp-loan-rate">5.0%</strong></div>
+            <div><span class="text-[#32373c]/50">Loan Type:</span> <strong>Simple Interest</strong></div>
+        </div>
+    </div>
+
+    <!-- Loan Details -->
+    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8 max-w-lg">
+        <h2 class="text-xl font-bold mb-4 text-[#313131]">Loan Details</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Your Cash Value</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                    <input type="number" id="input-cash-value" value="100000" min="1000" step="1000" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                </div>
+                <p class="text-xs text-[#32373c]/40 mt-1">The current cash value in your whole life policy.</p>
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Loan Amount</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#32373c]/60">$</span>
+                    <input type="number" id="input-loan-amount" value="50000" min="1000" step="1000" class="input input-bordered w-full bg-white text-[#313131] border-gray-300 pl-7" />
+                </div>
+                <p class="text-xs text-[#32373c]/40 mt-1">How much you want to borrow. Must be within your cash value.</p>
+            </div>
+            <div class="pt-3 border-t border-gray-200">
+                <p class="text-xs text-[#7a00df]/70 mb-3">These are the terms you'd get from a bank — we use them to calculate what you'd pay the traditional way.</p>
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Bank Loan Term (years)</label>
+                <input type="number" id="input-loan-term" value="5" min="1" max="30" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+            <div>
+                <label class="block text-sm text-[#32373c]/70 mb-1">Bank Interest Rate (%)</label>
+                <input type="number" id="input-bank-rate" value="7.0" min="0" max="30" step="0.1" class="input input-bordered w-full bg-white text-[#313131] border-gray-300" />
+            </div>
+            <div class="pt-2 border-t border-gray-200">
+                <div class="text-sm text-[#32373c]/50">Bank Payment:</div>
+                <div class="text-lg font-bold text-[#313131]" id="disp-bank-payment">—</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">This is what you'd pay the bank every month. With IBC, you borrow from your own policy instead.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <div class="mb-10">
+        <button id="btn-calculate" class="btn btn-primary btn-lg sm:btn-wide">Compare</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="hidden space-y-10 mb-16">
+        <div id="summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+        <div>
+            <h2 class="text-2xl font-bold mb-4 text-[#313131]">Year-by-Year Comparison</h2>
+            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-[#32373c]/60">
+                            <th class="bg-gray-50">Year</th>
+                            <th class="bg-gray-50 text-right">Bank: Balance</th>
+                            <th class="bg-gray-50 text-right">Bank: Interest<br/><span class="font-normal text-xs">(Gone forever)</span></th>
+                            <th class="bg-gray-50 text-right">Bank: Total Int.</th>
+                            <th class="bg-gray-50 text-right">Policy: Balance</th>
+                            <th class="bg-gray-50 text-right">Policy: Interest<br/><span class="font-normal text-xs">(To insurer)</span></th>
+                            <th class="bg-gray-50 text-right">Policy: Total Int.</th>
+                            <th class="bg-gray-50 text-right">Dividends Earned<br/><span class="font-normal text-xs">(Free growth)</span></th>
+                            <th class="bg-gray-50 text-right">You Save</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</IBCLayout>
+
+<style>
+    .table th, .table td {
+        padding: 0.5rem 0.75rem;
+        font-variant-numeric: tabular-nums;
+    }
+    .table tbody tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .table tbody tr:hover {
+        background: rgba(122,0,223,0.04);
+    }
+    input[type="number"]::-webkit-inner-spin-button {
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+    // ─── Load Policy from localStorage ───
+    let policyDivRate = 5.0;
+    let policyLoanRate = 5.0;
+
+    try {
+        const raw = localStorage.getItem('iwg-policy');
+        if (raw) {
+            const data = JSON.parse(raw);
+            policyDivRate = Number(data.dividendRate) || 5.0;
+            policyLoanRate = Number(data.policyLoanRate) || 5.0;
+        }
+    } catch {}
+
+    // Display policy summary
+    document.getElementById('disp-dividend')!.textContent = policyDivRate + '%';
+    document.getElementById('disp-loan-rate')!.textContent = policyLoanRate + '%';
+
+    // ─── Helpers ───
+    function val(id: string): number {
+        return Number((document.getElementById(id) as HTMLInputElement).value);
+    }
+    function fmt(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function fmtFull(n: number): string {
+        return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ─── Amortization ───
+    function monthlyPayment(principal: number, annualRate: number, years: number): number {
+        const r = annualRate / 12;
+        const n = years * 12;
+        if (r === 0) return principal / n;
+        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function amortizationSchedule(principal: number, annualRate: number, years: number) {
+        const r = annualRate / 12;
+        const mp = monthlyPayment(principal, annualRate, years);
+        const schedule = [];
+        let balance = principal;
+        let cumInterest = 0;
+
+        for (let yr = 1; yr <= years; yr++) {
+            let yearInterest = 0;
+            for (let m = 0; m < 12; m++) {
+                if (balance <= 0.01) { balance = 0; break; }
+                const intPmt = balance * r;
+                const prinPmt = Math.min(mp - intPmt, balance);
+                yearInterest += intPmt;
+                balance -= prinPmt;
+            }
+            cumInterest += yearInterest;
+            schedule.push({
+                year: yr,
+                interest: yearInterest,
+                balance: Math.max(0, balance),
+                cumInterest
+            });
+        }
+        return schedule;
+    }
+
+    // ─── Live bank payment display ───
+    function updateBankPaymentDisplay() {
+        const amount = val('input-loan-amount');
+        const rate = val('input-bank-rate') / 100;
+        const term = val('input-loan-term');
+        if (term <= 0 || amount <= 0) {
+            document.getElementById('disp-bank-payment')!.textContent = '—';
+            return;
+        }
+        const mp = monthlyPayment(amount, rate, term);
+        const totalPaid = mp * term * 12;
+        const totalInterest = totalPaid - amount;
+        document.getElementById('disp-bank-payment')!.textContent = fmtFull(mp) + '/mo (' + fmt(totalInterest) + ' in interest)';
+    }
+    document.getElementById('input-loan-amount')!.addEventListener('input', updateBankPaymentDisplay);
+    document.getElementById('input-bank-rate')!.addEventListener('input', updateBankPaymentDisplay);
+    document.getElementById('input-loan-term')!.addEventListener('input', updateBankPaymentDisplay);
+    updateBankPaymentDisplay();
+
+    // ─── Calculate ───
+    document.getElementById('btn-calculate')!.addEventListener('click', () => {
+        const cashValue = val('input-cash-value');
+        const loanAmount = val('input-loan-amount');
+        const loanTerm = val('input-loan-term');
+        const bankRate = val('input-bank-rate') / 100;
+        const divRate = policyDivRate / 100;
+        const loanRate = policyLoanRate / 100;
+
+        // Check cash value covers the loan
+        if (cashValue < loanAmount) {
+            document.getElementById('results')!.classList.remove('hidden');
+            document.getElementById('summary-cards')!.innerHTML = `
+                <div class="col-span-full bg-red-50 border border-red-200 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-red-700 mb-2">Insufficient Cash Value</h3>
+                    <p class="text-[#313131]">Your cash value is <strong>${fmt(cashValue)}</strong> but you want to borrow <strong>${fmt(loanAmount)}</strong>.</p>
+                    <p class="text-sm text-[#32373c]/70 mt-1">You can only borrow up to your available cash value. Try a lower loan amount.</p>
+                </div>
+            `;
+            document.getElementById('comparison-body')!.innerHTML = '';
+            return;
+        }
+
+        // Bank loan (compound monthly amortization)
+        const bankSchedule = amortizationSchedule(loanAmount, bankRate, loanTerm);
+        const bankTotalInterest = bankSchedule[bankSchedule.length - 1].cumInterest;
+        const bankMonthly = monthlyPayment(loanAmount, bankRate, loanTerm);
+
+        // Policy loan — simple interest annually, equal principal payments
+        const annualPrincipalPayment = loanAmount / loanTerm;
+        const policySchedule: { year: number; interest: number; principalPmt: number; balance: number; cumInterest: number }[] = [];
+        let pBal = loanAmount;
+        let pCumInterest = 0;
+        for (let yr = 1; yr <= loanTerm; yr++) {
+            const yrInterest = pBal * loanRate;
+            pCumInterest += yrInterest;
+            pBal = Math.max(0, pBal - annualPrincipalPayment);
+            policySchedule.push({
+                year: yr,
+                interest: yrInterest,
+                principalPmt: annualPrincipalPayment,
+                balance: pBal,
+                cumInterest: pCumInterest
+            });
+        }
+        const policyTotalInterest = pCumInterest;
+
+        // Non-direct recognition: full cash value earns dividends even with loan out
+        // Dividends earned on the loaned portion
+        let cumDividends = 0;
+        let divBal = loanAmount;
+        for (let yr = 0; yr < loanTerm; yr++) {
+            cumDividends += divBal * divRate;
+            if (yr < policySchedule.length) {
+                divBal = policySchedule[yr].balance;
+            }
+        }
+
+        // Net advantage = Bank interest - Policy loan interest + Dividends earned
+        const netAdvantage = bankTotalInterest - policyTotalInterest + cumDividends;
+
+        // Summary cards
+        document.getElementById('summary-cards')!.innerHTML = `
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Going Through the Bank</div>
+                <div class="text-2xl font-bold text-red-500">${fmt(bankTotalInterest)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">in interest (${fmtFull(bankMonthly)}/mo)</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">This is money you pay to the bank and never see again.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Going Through Your Policy</div>
+                <div class="text-2xl font-bold text-red-400">${fmt(policyTotalInterest)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">in interest (paid to insurance company)</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">You still pay interest, but it's less because it's simple interest — not compounding like the bank.</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div class="text-sm text-[#32373c]/60 mb-1">Dividends Your Money Earned</div>
+                <div class="text-2xl font-bold text-emerald-600">${fmt(cumDividends)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">while the loan was out</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">Even though you borrowed from your policy, your full cash value kept earning dividends. This is free growth you wouldn't get with a bank loan.</div>
+            </div>
+            <div class="bg-[#7a00df]/5 rounded-xl p-5 border border-[#7a00df]/20">
+                <div class="text-sm text-[#32373c]/60 mb-1">Total Money You Keep</div>
+                <div class="text-2xl font-bold text-[#7a00df]">${fmt(netAdvantage)}</div>
+                <div class="text-xs text-[#32373c]/50 mt-1">compared to going through the bank</div>
+                <div class="text-xs text-[#32373c]/40 mt-1">This is the interest you saved + the dividends you earned − the interest you paid to the insurer. It's money that stays in your pocket.</div>
+            </div>
+        `;
+
+        // Table
+        let cumDiv = 0;
+        let divTrackBal = loanAmount;
+        const compBody = document.getElementById('comparison-body')!;
+        compBody.innerHTML = '';
+        for (let yr = 0; yr < loanTerm; yr++) {
+            const bs = bankSchedule[yr];
+            const ps = policySchedule[yr];
+            const yrDiv = divTrackBal * divRate;
+            cumDiv += yrDiv;
+            divTrackBal = ps.balance;
+            const netSavings = bs.cumInterest - ps.cumInterest + cumDiv;
+
+            compBody.innerHTML += `
+                <tr>
+                    <td>${yr + 1}</td>
+                    <td class="text-right">${fmtFull(bs.balance)}</td>
+                    <td class="text-right">${fmtFull(bs.interest)}</td>
+                    <td class="text-right">${fmtFull(bs.cumInterest)}</td>
+                    <td class="text-right">${fmtFull(ps.balance)}</td>
+                    <td class="text-right text-red-400">${fmtFull(ps.interest)}</td>
+                    <td class="text-right text-red-400">${fmtFull(ps.cumInterest)}</td>
+                    <td class="text-right text-emerald-600">${fmtFull(cumDiv)}</td>
+                    <td class="text-right font-semibold text-[#7a00df]">${fmtFull(netSavings)}</td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('results')!.classList.remove('hidden');
+        document.getElementById('results')!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+</script>
